@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"sort"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"github.com/meamank/super-stat-go/internal/cpu"
+	"github.com/meamank/super-stat-go/internal/server"
 )
 
 func formatUsage(usage map[string]float64) {
@@ -31,43 +34,51 @@ func formatUsage(usage map[string]float64) {
 func main() {
 
 	watchMode := flag.Bool("watch", false, "Stream CPU usage!")
+	serverMode := flag.Bool("server", false, "HTTP Endpoint /cpu-stat")
 
 	flag.Parse()
 
-	if !*watchMode {
-		usage, err := cpu.GetPerCPUCore()
+	if *serverMode {
+		mux := http.NewServeMux()
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
-
-		formatUsage(usage)
+		mux.HandleFunc("GET /cpu-stat", server.CPUStatStreamHandler)
+		fmt.Println("server running on Port :8080")
+		log.Fatal(http.ListenAndServe(":8080", mux))
 		return
 	}
 
-	ticker := time.NewTicker(1 * time.Second)
+	if *watchMode {
+		ticker := time.NewTicker(1 * time.Second)
 
-	defer ticker.Stop()
+		defer ticker.Stop()
 
-	sigChan := make(chan os.Signal, 1)
+		sigChan := make(chan os.Signal, 1)
 
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	for {
-		select {
-		case <-ticker.C:
-			usage, err := cpu.GetPerCPUCore()
+		for {
+			select {
+			case <-ticker.C:
+				usage, err := cpu.GetPerCPUCore()
 
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				os.Exit(1)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+					os.Exit(1)
+				}
+				formatUsage(usage)
+			case <-sigChan:
+				return
 			}
-			formatUsage(usage)
-		case <-sigChan:
-			return
-		}
 
+		}
 	}
+	usage, err := cpu.GetPerCPUCore()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	formatUsage(usage)
 
 }

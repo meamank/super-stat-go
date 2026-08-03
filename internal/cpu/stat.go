@@ -2,6 +2,8 @@ package cpu
 
 import (
 	"bufio"
+	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -13,17 +15,9 @@ type CPUStat struct {
 	idle  uint64
 }
 
-func readAllCPUStat() (map[string]CPUStat, error) {
-	file, err := os.Open("/proc/stat")
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
+func parseCPUStatFromReader(r io.Reader) (map[string]CPUStat, error) {
 	statsMap := make(map[string]CPUStat)
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -65,6 +59,18 @@ func readAllCPUStat() (map[string]CPUStat, error) {
 	return statsMap, nil
 }
 
+func readAllCPUStat() (map[string]CPUStat, error) {
+	file, err := os.Open("/proc/stat")
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	return parseCPUStatFromReader(file)
+}
+
 func GetPerCPUCore() (map[string]float64, error) {
 	firstStat, err := readAllCPUStat()
 
@@ -94,7 +100,7 @@ func GetPerCPUCore() (map[string]float64, error) {
 
 		if totalDelta > 0 {
 			usage := ((totalDelta - idleDelta) / totalDelta) * 100
-			results[coreName] = usage
+			results[coreName] = math.Round(usage*100) / 100
 		} else {
 			results[coreName] = 0.0
 		}

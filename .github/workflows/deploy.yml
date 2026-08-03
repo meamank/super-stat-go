@@ -1,0 +1,46 @@
+name: Comiple and Deploy ssgo to server
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    deploy:
+        runs-on:
+            ubuntu-latest
+        
+        steps:
+            -   name: Checkout Code
+                uses: actions/checkout@v4
+            -   name: Set up Go
+                uses: actions/setup-go@v5
+                with:
+                    go-version: '1.22'
+            
+            -   name: Run Unit Tests
+                run : go test -v ./ ...
+            
+            -   name: Compile Linux Binary
+                run: |
+                    GOOS=linux GOARCH=amd64 go build -o ssgo ./cmd/ssgo
+            
+            -   name: Copy Binary to Server via ssh
+                uses: appleboy/scp-action@v0.1.7
+                with: 
+                    host: ${{ secrets.SERVER_HOST}}
+                    username: ${{ secrets.SERVER_USER}}
+                    key: ${{secrets.SSH_PRIVATE_KEY}}
+                    source: "ssgo"
+                    target: "/tmp/"
+            -   name: Install Binary to /usr/local/bin on Server
+                uses: appleboy/ssh-action@v1.0.3
+                with:
+                    host: ${{ secrets.SERVER_HOST }}
+                    username: ${{ secrets.SERVER_USER }}
+                    key: ${{ secrets.SSH_PRIVATE_KEY }}
+                    script: |
+                        sudo mv /tmp/ssgo /usr/local/bin/ssgo
+                        sudo chmod +x /usr/local/bin/ssgo
+                        echo "Successfully updated ssgo to /usr/local/bin/ssgo!"
+                        ssgo --help
