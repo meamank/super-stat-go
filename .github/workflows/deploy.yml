@@ -45,7 +45,8 @@ jobs:
                     username: ${{ secrets.SERVER_USER }}
                     key: ${{ secrets.SSH_PRIVATE_KEY }}
                     script: |
-                        sudo mv /tmp/ssgo /usr/local/bin/ssgo
-                        sudo chmod +x /usr/local/bin/ssgo
-                        echo "Successfully updated ssgo to /usr/local/bin/ssgo!"
-                        ssgo --help
+                        mkdir -p ~/.local/bin
+                        mv /tmp/ssgo ~/.local/bin/ssgo
+                        chmod +x ~/.local/bin/ssgo
+                        echo "Successfully updated ssgo!"
+                        ~/.local/bin/ssgo --help
