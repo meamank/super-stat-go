@@ -19,7 +19,7 @@ jobs:
                     go-version: '1.22'
             
             -   name: Run Unit Tests
-                run : go test -v ./ ...
+                run : go test -v ./...
             
             -   name: Compile Linux Binary
                 run: |
