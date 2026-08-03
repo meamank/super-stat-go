@@ -13,6 +13,13 @@ jobs:
         steps:
             -   name: Checkout Code
                 uses: actions/checkout@v4
+
+            -   name: Connect to Tailscale VPN
+                uses: tailscale/github-action@v4
+                with:
+                    oauth-client-id: ${{ secrets.TAILSCALE_ID}}
+                    audience: ${{ secrets.TAILSCALE_KEY }}
+                    tags: tag:ci
             -   name: Set up Go
                 uses: actions/setup-go@v5
                 with:
@@ -24,7 +31,7 @@ jobs:
             -   name: Compile Linux Binary
                 run: |
                     GOOS=linux GOARCH=amd64 go build -o ssgo ./cmd/ssgo
-            
+
             -   name: Copy Binary to Server via ssh
                 uses: appleboy/scp-action@v0.1.7
                 with: 
