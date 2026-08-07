@@ -6,7 +6,13 @@ import (
 	"net/http"
 
 	"github.com/meamank/super-stat-go/internal/cpu"
+	"github.com/meamank/super-stat-go/internal/mem"
 )
+
+type StreamPayload struct {
+	CPU map[string]float64 `json:"cpu"`
+	Mem mem.MemInfo        `json:"mem"`
+}
 
 func CPUStatStreamHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -28,13 +34,24 @@ func CPUStatStreamHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Client Disconnected from stream!")
 			return
 		default:
-			usage, err := cpu.GetPerCPUCore()
+			cpuUsage, err := cpu.GetPerCPUCore()
 
 			if err != nil {
 				continue
 			}
 
-			dataBytes, err := json.Marshal(usage)
+			memStat, err := mem.GetMemUsage()
+
+			if err != nil {
+				continue
+			}
+
+			payload := StreamPayload{
+				CPU: cpuUsage,
+				Mem: memStat,
+			}
+
+			dataBytes, err := json.Marshal(payload)
 
 			if err != nil {
 				continue
