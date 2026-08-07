@@ -1,4 +1,4 @@
-name: Comiple and Deploy ssgo to server
+name: Compile and Deploy ssgo to server
 
 on:
     push:
@@ -22,10 +22,7 @@ jobs:
                 uses: actions/setup-go@v5
                 with:
                     go-version: '1.22'
-            
-            -   name: Run Unit Tests
-                run : go test -v ./...
-            
+
             -   name: Set up Bun
                 uses: oven-sh/setup-bun@v2
                 with:
@@ -36,7 +33,10 @@ jobs:
                     cd web
                     bun install
                     bun run build
-                    
+
+            -   name: Run Unit Tests
+                run : go test -v ./...
+
             -   name: Compile Linux Binary
                 run: |
                     GOOS=linux GOARCH=amd64 go build -o ssgo ./cmd/ssgo
