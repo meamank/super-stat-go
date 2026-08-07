@@ -4,13 +4,9 @@ import "./App.css";
 import { CPUSingleLineChart } from "@/components/CPUSingleLineChart";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Area, AreaChart, XAxis, YAxis } from "recharts";
 
 export interface MemStat {
   totalMb: number;
