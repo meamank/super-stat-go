@@ -42,6 +42,9 @@ func main() {
 		mux := http.NewServeMux()
 
 		mux.HandleFunc("GET /cpu-stat", server.CPUStatStreamHandler)
+
+		fileServer := http.FileServer(server.GetFileSystem())
+		mux.Handle("/", fileServer)
 		fmt.Println("server running on Port :8080")
 		log.Fatal(http.ListenAndServe(":8080", mux))
 		return
