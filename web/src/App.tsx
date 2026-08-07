@@ -4,13 +4,16 @@ import "./App.css";
 import { CPUSingleLineChart } from "@/components/CPUSingleLineChart";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { MemDonutChart } from "@/components/MemDonutChart";
+
 export interface MemStat {
-  totalMb: number;
-  usedMb: number;
-  availableMb: number;
+  [key: string]: number;
+  totalMB: number;
+  usedMB: number;
+  availableMB: number;
   usagePercent: number;
-  swapTotalMb: number;
-  swapUsedMb: number;
+  swapTotalMB: number;
+  swapUsedMB: number;
   swapUsagePercent: number;
 }
 
@@ -53,7 +56,12 @@ function App() {
   }, []);
 
   const cpuHistory = history.map((data) => data.cpu);
-  const availableMetrics = allStat ? Object.keys(allStat.cpu) : [];
+  const memHistory = history.map((data) => data.mem);
+
+  const availableMetricsCPU = allStat ? Object.keys(allStat.cpu) : [];
+
+  console.log("cpu:", cpuHistory);
+  console.log("mem", memHistory);
 
   if (!allStat) {
     return (
@@ -76,7 +84,7 @@ function App() {
           <CardTitle>CPU Usage</CardTitle>
         </CardHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 px-2">
-          {availableMetrics.reverse().map((key, index) => (
+          {availableMetricsCPU.reverse().map((key, index) => (
             <CPUSingleLineChart
               key={key}
               history={cpuHistory}
@@ -86,24 +94,35 @@ function App() {
           ))}
         </div>
       </Card>
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-        <span className="text-xs text-slate-400 font-mono">RAM USAGE</span>
-        <div className="text-3xl font-bold font-mono text-emerald-400 mt-1">
-          {allStat.mem.usagePercent}%
+
+      {/* 2. Memory & Swap Telemetry Info */}
+      <Card className="ring-0 p-6">
+        <CardHeader className="px-2">
+          <CardTitle>Memory & Swap Usage</CardTitle>
+        </CardHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 px-2">
+          <MemDonutChart
+            title="Total RAM"
+            totalMB={allStat.mem.totalMB}
+            usedMB={allStat.mem.usedMB}
+            availableMB={allStat.mem.availableMB}
+            usagePercent={allStat.mem.usagePercent}
+            usedColor="#ef4444"
+            availableColor="#10b981"
+          />
+
+          {/* 2. Swap Memory Pie Chart */}
+          <MemDonutChart
+            title="Swap Memory"
+            totalMB={allStat.mem.swapTotalMB}
+            usedMB={allStat.mem.swapUsedMB}
+            availableMB={allStat.mem.swapTotalMB - allStat.mem.swapUsedMB}
+            usagePercent={allStat.mem.swapUsagePercent}
+            usedColor="#f59e0b"
+            availableColor="#3b82f6"
+          />
         </div>
-        <p className="text-xs text-slate-400 mt-1 font-mono">
-          {allStat.mem.usedMb} MB / {allStat.mem.totalMb} MB
-        </p>
-      </div>
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-        <span className="text-xs text-slate-400 font-mono">Swap USAGE</span>
-        <div className="text-3xl font-bold font-mono text-emerald-400 mt-1">
-          {allStat.mem.swapUsagePercent}%
-        </div>
-        <p className="text-xs text-slate-400 mt-1 font-mono">
-          {allStat.mem.swapUsedMb} MB / {allStat.mem.swapTotalMb} MB
-        </p>
-      </div>
+      </Card>
     </div>
   );
 }
