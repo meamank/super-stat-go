@@ -2,11 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 import { CPUSingleLineChart } from "@/components/CPUSingleLineChart";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface MemStat {
   totalMb: number;
@@ -39,7 +35,7 @@ function App() {
   const [history, setHistory] = useState<AllData[]>([]);
 
   useEffect(() => {
-    const eventSource = new EventSource("http://127.0.0.1:8080/cpu-stat");
+    const eventSource = new EventSource("/cpu-stat");
 
     eventSource.onmessage = (event) => {
       const data: AllData = JSON.parse(event.data);
