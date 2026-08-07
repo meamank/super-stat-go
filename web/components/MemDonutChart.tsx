@@ -42,7 +42,9 @@ export function MemDonutChart({
       <div className="relative w-full h-32 flex items-center justify-center">
         <ChartContainer config={chartConfig} className="h-32 w-full">
           <PieChart>
-            <Tooltip formatter={(value: number) => [`${value} MB`, "Memory"]} />
+            <Tooltip
+              formatter={(value: any) => [`${value ?? 0} MB`, "Memory"]}
+            />
             <Pie
               data={chartData}
               dataKey="value"
