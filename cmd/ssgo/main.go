@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	superstatgo "github.com/meamank/super-stat-go"
 	"github.com/meamank/super-stat-go/internal/cpu"
 	"github.com/meamank/super-stat-go/internal/server"
 )
@@ -43,7 +44,7 @@ func main() {
 
 		mux.HandleFunc("GET /cpu-stat", server.CPUStatStreamHandler)
 
-		fileServer := http.FileServer(server.GetFileSystem())
+		fileServer := http.FileServer(superstatgo.GetFileSystem())
 		mux.Handle("/", fileServer)
 		fmt.Println("server running on Port :8080")
 		log.Fatal(http.ListenAndServe(":8080", mux))
