@@ -14,22 +14,36 @@ import (
 
 	superstatgo "github.com/meamank/super-stat-go"
 	"github.com/meamank/super-stat-go/internal/cpu"
+	"github.com/meamank/super-stat-go/internal/mem"
 	"github.com/meamank/super-stat-go/internal/server"
 )
 
-func formatUsage(usage map[string]float64) {
-	fmt.Print("\033[H\033[2J")
-	var keys []string
+func formatUsage(payload server.StreamPayload) {
+	fmt.Print("\033[H\033[2J") // In-place clear terminal
 
-	for k := range usage {
+	fmt.Println("==========================================")
+	fmt.Println("    🚀 SUPER STAT MONITOR (Ctrl+C to exit)")
+	fmt.Println("==========================================")
+
+	// 1. CPU Telemetry
+	fmt.Println("--- CPU TELEMETRY ---")
+	var keys []string
+	for k := range payload.CPU {
 		keys = append(keys, k)
 	}
-
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		fmt.Printf("%-8s: %.2f%%\n", strings.ToUpper(k), usage[k])
+		fmt.Printf("%-8s: %.2f%%\n", strings.ToUpper(k), payload.CPU[k])
 	}
+
+	// 2. Memory Telemetry
+	fmt.Println("\n--- MEMORY TELEMETRY ---")
+	fmt.Printf("%-12s: %.2f MB / %.2f MB (%.2f%%)\n", "RAM USED", payload.Mem.UsedMB, payload.Mem.
+		TotalMB, payload.Mem.UsagePercent)
+	fmt.Printf("%-12s: %.2f MB / %.2f MB (%.2f%%)\n", "SWAP USED", payload.Mem.SwapUsedMB, payload.
+		Mem.SwapTotalMB, payload.Mem.SwapUsagePercent)
+	fmt.Println("==========================================")
 }
 
 func main() {
@@ -63,26 +77,49 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				usage, err := cpu.GetPerCPUCore()
+				cpuUsage, err := cpu.GetPerCPUCore()
 
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 					os.Exit(1)
 				}
-				formatUsage(usage)
+				memUsage, err := mem.GetMemUsage()
+
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+					os.Exit(1)
+				}
+
+				payload := server.StreamPayload{
+					CPU: cpuUsage,
+					Mem: memUsage,
+				}
+
+				formatUsage(payload)
 			case <-sigChan:
 				return
 			}
 
 		}
 	}
-	usage, err := cpu.GetPerCPUCore()
+	cpuUsage, err := cpu.GetPerCPUCore()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	memUsage, err := mem.GetMemUsage()
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	formatUsage(usage)
+	payload := server.StreamPayload{
+		CPU: cpuUsage,
+		Mem: memUsage,
+	}
+
+	formatUsage(payload)
 
 }
